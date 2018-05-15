@@ -527,11 +527,11 @@ class MapboxCircle {
      */
     _onCenterHandleMouseUpOrMapMouseOut(event) {
         if (event.type === 'mouseout') {
-            const toMarker = event.originalEvent.toElement.classList.contains('mapboxgl-marker');
-            const fromCanvas = event.originalEvent.fromElement.classList.contains('mapboxgl-canvas');
+            const toMarker = event.originalEvent.toElement.classList.indexOf('mapboxgl-marker') != 1;
+            const fromCanvas = event.originalEvent.fromElement.classList.indexOf('mapboxgl-canvas') != 1;
 
-            const toCanvas = event.originalEvent.toElement.classList.contains('mapboxgl-canvas');
-            const fromMarker = event.originalEvent.fromElement.classList.contains('mapboxgl-marker');
+            const toCanvas = event.originalEvent.toElement.classList.indexOf('mapboxgl-canvas') != 1;
+            const fromMarker = event.originalEvent.fromElement.classList.indexOf('mapboxgl-marker') != 1;
 
             if ((fromCanvas && toMarker) || (fromMarker && toCanvas)) {
                 this.map.once('mouseout', this._onCenterHandleMouseUpOrMapMouseOut); // Add back 'once' handler.
@@ -666,11 +666,11 @@ class MapboxCircle {
      */
     _onRadiusHandlesMouseUpOrMapMouseOut(event) {
         if (event.type === 'mouseout') {
-            const toMarker = event.originalEvent.toElement.classList.contains('mapboxgl-marker');
-            const fromCanvas = event.originalEvent.fromElement.classList.contains('mapboxgl-canvas');
+            const toMarker = event.originalEvent.toElement.classList.indexOf('mapboxgl-marker') != 1;
+            const fromCanvas = event.originalEvent.fromElement.classList.indexOf('mapboxgl-canvas') != 1;
 
-            const toCanvas = event.originalEvent.toElement.classList.contains('mapboxgl-canvas');
-            const fromMarker = event.originalEvent.fromElement.classList.contains('mapboxgl-marker');
+            const toCanvas = event.originalEvent.toElement.classList.indexOf('mapboxgl-canvas') != 1;
+            const fromMarker = event.originalEvent.fromElement.classList.indexOf('mapboxgl-marker') != 1;
 
             if ((fromCanvas && toMarker) || (fromMarker && toCanvas)) {
                 this.map.once('mouseout', this._onRadiusHandlesMouseUpOrMapMouseOut); // Add back 'once' handler.
