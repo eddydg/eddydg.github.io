@@ -90,6 +90,7 @@
     "@turf/distance": "^4.7.3",
     "@turf/helpers": "^4.7.3",
     "@turf/truncate": "^4.7.3",
+    "babel-polyfill": "^6.26.0",
     "events": "^1.1.1",
     "lodash": "^4.17.5",
     "lodash.debounce": "^4.0.8",

@@ -1,5 +1,6 @@
 'use strict';
 
+require('babel-polyfill');
 const projectVersion = require('../package.json').version;
 const _ = require('lodash');
 const EventEmitter = require('events');
