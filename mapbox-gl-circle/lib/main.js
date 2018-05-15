@@ -1199,7 +1199,7 @@ class MapboxCircle {
                 mutations.forEach((mutation) => {
                     const removedNodes = Array.from(mutation.removedNodes);
                     const directMatch = removedNodes.indexOf(target) > -1;
-                    const parentMatch = removedNodes.some((parent) => parent.contains(target));
+                    const parentMatch = removedNodes.some((parent) => parent.indexOf(target) != 1);
                     if (directMatch || parentMatch) {
                         this.remove();
                     }
