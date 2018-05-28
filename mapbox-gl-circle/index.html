@@ -7,8 +7,11 @@
     <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.44.1/mapbox-gl.js'></script>
     <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.44.1/mapbox-gl.css' rel='stylesheet'/>
     <script src='https://npmcdn.com/@turf/turf@4.7.3/turf.min.js'></script>
-    <script src='./mapbox-gl-circle.min.js'></script>
-    <script src='https://npmcdn.com/mapbox-gl-circle/dist/mapbox-gl-circle.min.js'></script>
+    <script src='dist/mapbox-gl-circle.min.js'></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.10/lodash.min.js'></script>
+    <script src='https://npmcdn.com/@turf/turf/turf.min.js'></script>
+    <!--<script src='https://npmcdn.com/mapbox-gl-circle/dist/mapbox-gl-circle.min.js'></script>-->
+    <!--<script src='dist/mapbox-gl-circle-dev.js'></script>-->
     <style>
         body {
             margin: 0;
@@ -56,6 +59,30 @@
             z-index: 100;
             background-color: rgba(255, 255, 255, 0.75);
         }
+
+        .mapboxgl-ctrl.mapboxgl-ctrl-scale {
+              position: relative;
+              background-color: transparent;
+              border-style: none none solid !important;
+              text-align: center;
+              font-weight: bolder;
+              font-size: 0.8rem;
+            }
+
+            .mapboxgl-ctrl.mapboxgl-ctrl-scale:after {
+              content: '';
+                position: absolute;
+                bottom: 0px;
+                left: 0px;
+                height: 50%;
+              width: 100%;
+                
+              border-width: 2px;
+              border-color: #333;
+              border-style: none solid;
+              box-sizing: border-box;
+            }
+
     </style>
 </head>
 <body>
@@ -65,105 +92,218 @@
     </div>
     <div id="debug"></div>
 </div>
-<div id='menu'>
-    <strong>Map Style:</strong>
-    <input id='basic' type='radio' name='styleSwitcher' value='basic'>
-    <label for='basic'>basic</label>
-    <input id='streets' type='radio' name='styleSwitcher' value='streets' checked='checked'>
-    <label for='streets'>streets</label>
-    <input id='bright' type='radio' name='styleSwitcher' value='bright'>
-    <label for='bright'>bright</label>
-    <input id='light' type='radio' name='styleSwitcher' value='light'>
-    <label for='light'>light</label>
-    <input id='dark' type='radio' name='styleSwitcher' value='dark'>
-    <label for='dark'>dark</label>
-    <input id='satellite' type='radio' name='styleSwitcher' value='satellite'>
-    <label for='satellite'>satellite</label>
-    <input id='satellite-streets' type='radio' name='styleSwitcher' value='satellite-streets'>
-    <label for='satellite-streets'>satellite-streets</label>
-</div>
 <div id='version'></div>
 <div id='map'></div>
-<!--suppress ES6ConvertVarToLetConst, ES6ModulesDependencies -->
 <script>
     document.getElementById('version').textContent = 'mapbox-gl-circle-' + MapboxCircle.VERSION;
-
-    // noinspection SpellCheckingInspection
     mapboxgl.accessToken = 'pk.eyJ1IjoiYW5hbmR0aGFra2VyIiwiYSI6ImNqNWptdjU1YjJheWszM256ZWN0MXNrejMifQ.TXnoKtnlam-KBmRSjXQgEw';
 
-    function boundsTo5percentRadius(bounds) {
-        // noinspection JSUnresolvedVariable
-        // noinspection JSCheckFunctionSignatures
-        return Math.round(
-            turf.distance(bounds.getSouthWest().toArray(), bounds.getNorthEast().toArray(), 'meters') * .05);
+    // ref: https://wiki.openstreetmap.org/wiki/Zoom_levels
+    const metersPerPixelsAtLatitude = (zoomLevel, latitude) => {
+      const earthCircumference = 40075017;
+      const latitudeRadians = latitude * (Math.PI / 180);
+      return earthCircumference * Math.cos(latitudeRadians) / Math.pow(2, zoomLevel + 8);
+    };
+
+    const metersToPixelsAtLatitude = (meters, zoomLevel, latitude) => {
+        return meters / metersPerPixelsAtLatitude(zoomLevel, latitude);
     }
 
+    const minPxCircleShowLabel = 15;
+    const defaultZoom = 15;
     var map = new mapboxgl.Map({
         container: 'map',
         style: 'mapbox://styles/mapbox/streets-v9',
-        center: [18.059678, 59.322465],
-        zoom: 12.305430
-    }).addControl(new mapboxgl.ScaleControl({maxWidth: 300}), 'top-right');
+        center: [18.039120, 59.346978],
+        zoom: 15
+    });
 
-    var layerList = document.getElementById('menu');
-    var inputs = layerList.getElementsByTagName('input');
-
-    function switchLayer(clickEvent) {
-        var layerId = clickEvent.target.id;
-        map.setStyle('mapbox://styles/mapbox/' + layerId + '-v9');
-    }
-
-    for (var i = 0; i < inputs.length; i++) {
-        inputs[i].onclick = switchLayer;
-    }
-
-    // Non-editable circles.
-    var lidingoMunicipality = {position: {lat: 59.379278, lng: 18.17814}, radius: 4846};
-
-    new MapboxCircle(lidingoMunicipality.position, lidingoMunicipality.radius, {
-        strokeColor: '#0000ff',
-        strokeOpacity: 0.25,
-        strokeWeight: 2,
-        refineStroke: true,
-        fillColor: '#000000',
-        fillOpacity: 0.05
-    }).addTo(map);
-
-    // Editable circles.
-    var northPole = {position: {lat: 84.928218, lng: -38.074812}, radius: 1100000};
-    var irelandAndUK = {position: {lat: 54.431637, lng: -4.223538}, radius: 547293};
-    var oldTown = {position: {lat: 59.325017, lng: 18.069263}, radius: 508};
-    var smsiStockholm = {position: {lat: 59.346978, lng: 18.039120}, radius: 142};
-    var kvadratSthlm = {position: {lat: 59.34131, lng: 18.058817}, radius: 122};
-    var stormforsOffice = {position: {lat: 59.337678, lng: 18.083402}, radius: 85};
-    var midsommarkransenSubway = {position: {lat: 59.301857, lng: 18.012292}, radius: 131};
+    var mbcircle1 = {
+        position: { lat: 59.346978, lng: 18.039120 },
+        radius: 142,
+        radiusPx: metersToPixelsAtLatitude(142, defaultZoom, 59.346978)
+    };
+    var mbcircle2 = {
+        position: { lat: 59.350, lng: 18.045 },
+        radius: 142,
+        radiusPx: metersToPixelsAtLatitude(142, defaultZoom, 59.350)
+    };
+    const circles = [mbcircle1, mbcircle2];
 
     var editableCircleOpts = {
         editable: true,
-        minRadius: 50,
-        debugEl: document.getElementById('debug')
+        minRadius: 10,
+        maxRadius: 2000,
+        debugEl: document.getElementById('debug'),
+        strokeWeight: 1,
+        strokeColor: "#f00"
     };
 
-    var baseDelay = 500;
-    [northPole, irelandAndUK, oldTown, smsiStockholm, kvadratSthlm, stormforsOffice, midsommarkransenSubway].forEach(
-        function (item) {
-            window.setTimeout(function () {
+    var markers = [];
+    map.on('load', () => {
+        map.addControl(new mapboxgl.ScaleControl(), 'bottom-right');
+
+        circles.forEach(
+            function (item) {
                 var newEditable = new MapboxCircle(item.position, item.radius, editableCircleOpts).addTo(map)
-                    .once('click', function (mapMouseEvent) { // Left-click on circle to remove.
-                        console.log('remove circle / mapMouseEvent:', mapMouseEvent);
-                        newEditable.remove();
-                    });
-            }, baseDelay += 500);
+                    .on('radiuschanging', (e) => {
+                        item.radius = e.radius;
+                        const [lng, lat] = e.center;
+                        item.position = {lng, lat};
+                        item.radiusPx = metersToPixelsAtLatitude(e.radius, e.map.getZoom(), lat);
+                        
+                        map.getSource('radius-segments').setData(getCircleRadiusSource(circles));
+                        map.getSource('radius-labels').setData(getCircleLabelSource(circles));
+                    })
+                    .on('centerchanging', e => {
+                        item.radius = e.radius;
+                        const [lng, lat] = e.center;
+                        item.position = {lng, lat};
+                        
+                        map.getSource('radius-segments').setData(getCircleRadiusSource(circles));
+                        map.getSource('radius-labels').setData(getCircleLabelSource(circles));
+                    })
+                markers.push(newEditable);
+            });
+
+        map.on('zoom', e => { // zoomend, throttle
+            const zoom = e.target.getZoom();
+            circles.forEach(c => {
+                let before = c.radiusPx;
+                c.radiusPx = metersToPixelsAtLatitude(c.radius, zoom, c.position.lat);
+            });
+            map.getSource('radius-labels').setData(getCircleLabelSource(circles));
         });
 
-    map.on('contextmenu', function (event) { // Right-click on map to add new circle.
-        console.log('Add editable circle at ' + event.lngLat);
-        var newEditable = new MapboxCircle(event.lngLat, boundsTo5percentRadius(map.getBounds()), editableCircleOpts)
-            .once('click', function (mapMouseEvent) {
-                console.log('remove circle / mapMouseEvent:', mapMouseEvent);
-                newEditable.remove();
-            })
-            .addTo(map);
+        // By default the bearing is facing East
+        const getRadiusSegment = ({ lng, lat }, radius, bearing = 90) => {
+            const radiusKm = radius / 1000;
+            const from = [lng, lat];
+            return [
+                from,
+                turf.destination(from, radiusKm, bearing).geometry.coordinates
+            ];
+        }
+
+        const getCircleRadiusSource = (circles) => {
+            return {
+                "type": "FeatureCollection",
+                "features": circles.map(c => {
+                    const radiusSegment = getRadiusSegment(c.position, c.radius)
+                    return {
+                        "type": "Feature",
+                        "geometry": {
+                          "type": "LineString",
+                          "coordinates": radiusSegment
+                        }
+                    }
+                })
+            };
+        }
+        const getCircleLabelSource = (circles) => {
+            return {
+                "type": "FeatureCollection",
+                "features": circles.map(c => {
+                    let coordinates;
+                    if (c.radiusPx >= minPxCircleShowLabel) {
+                        const radiusSegment = getRadiusSegment(c.position, c.radius);
+                        const center = turf.center(turf.featureCollection([
+                            turf.point(radiusSegment[0]),
+                            turf.point(radiusSegment[1])
+                        ]));
+                        coordinates = center.geometry.coordinates;
+                    } else {
+                        const { lat, lng } = c.position;
+                        const topRightPosition = turf.transformTranslate(turf.point([lng, lat]), c.radius / 1000, 45);
+                        console.log(c.position);
+                        console.log(topRightPosition)
+                        coordinates = topRightPosition.geometry.coordinates;
+                    }
+                    return {
+                        "type": "Feature",
+                        "geometry": {
+                          "type": "Point",
+                          "coordinates": coordinates
+                        },
+                        "properties": {
+                          "radius": c.radius,
+                          "radiusPx": c.radiusPx
+                        }
+                    }
+                })
+            }
+        }
+
+        const initializeData = getCircleRadiusSource(circles);
+        map.addSource('radius-segments', {
+            "type": "geojson",
+            "data": initializeData
+        })
+        map.addSource('radius-labels', {
+            "type": "geojson",
+            "data": getCircleLabelSource(circles)
+        })
+        const distanceMarkers = [];
+
+        map.addLayer({
+            "id": "distance_label",
+            "type": "symbol",
+            "source": "radius-labels",
+            "filter": [">=",
+                ["to-number", ["get", "radiusPx"]],
+                2
+            ],
+            "paint": {
+              "text-color": "#f00",
+              "text-opacity": 0,
+              "text-opacity-transition": {
+                "duration": 2500
+              },
+            },
+            "layout": {
+              "symbol-placement": "point",
+              "text-font": ["Open Sans Regular","Arial Unicode MS Regular"],
+              "text-field": '{radius}m',
+              //"text-offset": [0, -0.6],
+              "text-offset": [
+                "case",
+                [">=",
+                    ["to-number", ["get", "radiusPx"]],
+                    minPxCircleShowLabel
+                ],
+                ["literal", [0, -0.6]],
+                ["literal", [0.2, -0.1]]
+              ],
+              "text-anchor": [
+                "case",
+                [">=",
+                    ["to-number", ["get", "radiusPx"]],
+                    minPxCircleShowLabel
+                ],
+                "center", 
+                "bottom-left"
+              ],
+              "text-justify": "center",
+              "text-size": 12,
+              "text-pitch-alignment": "viewport",
+              "text-allow-overlap": true, // Smooth radius label update
+            }
+        });
+        map.setPaintProperty("distance_label", "text-opacity", 1);
+
+        map.addLayer({
+            "id": "distance_line",
+            "type": "line",
+            "source": "radius-segments",
+            "paint": {
+                "line-color": "#f00",
+                "line-opacity": 0.9,
+                "line-width": 1,
+                "line-dasharray": [2, 2]
+            }
+        });
+
+        
     });
 
 </script>
