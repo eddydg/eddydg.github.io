@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Navigo</title>
+
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+        }
+        #content {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+        }
+        #navigo-img {
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div id="content">
+        <div id="navigo-img">
+            <img src="./assets/img/verso.jpg" onclick="playOk()" />
+        </div>
+    </div>
+    <audio id="okSound" src="./assets/sound/ok.flac"></audio>
+
+    <script>
+        var okSoundComponent = document.getElementById("okSound");
+        function playOk() {
+            okSoundComponent.play();
+        }
+    </script>
+</body>
+</html>
